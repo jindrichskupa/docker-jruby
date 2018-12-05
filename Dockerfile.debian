@@ -1,0 +1,53 @@
+FROM debian:stretch-slim
+
+RUN apt-get update && \
+    apt-get install software-properties-common \
+    wget \
+    curl \
+    git \
+    tar \
+    bzip2 \
+    gnupg \
+    apt-transport-https \
+    unzip -y && \
+    mkdir -p /usr/share/man/man1/ && \
+    mkdir -p /usr/share/man/man7/ && \   
+    apt-get install -y --no-install-recommends build-essential \
+    zlib1g-dev libssl-dev libreadline-dev \
+    libyaml-dev libxml2-dev libxslt-dev\
+    libjemalloc-dev libssl-dev default-jre && \
+    apt-get clean
+
+ENV PATH /root/.rbenv/bin:$PATH
+ENV CONFIGURE_OPTS --disable-install-doc
+ENV RUBY_CONFIGURE_OPTS --with-jemalloc
+
+RUN git clone https://github.com/sstephenson/rbenv.git /root/.rbenv && \
+    git clone https://github.com/sstephenson/ruby-build.git /root/.rbenv/plugins/ruby-build && \
+    echo 'export PATH="/root/.rbenv/bin:$PATH"' >> /etc/profile.d/rbenv.sh && \
+    echo 'eval "$(rbenv init -)"' >> /etc/profile.d/rbenv.sh # or /etc/profile
+RUN bash -lc 'rbenv install jruby-9.1.14.0 && rbenv global jruby-9.1.14.0 && gem install bundler'
+
+RUN curl -sL https://deb.nodesource.com/setup_9.x | bash - && \ 
+    apt-get update && apt-get install -y nodejs && \
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
+    apt-get update && apt-get -y install yarn && \
+    npm -g install phantomjs-prebuilt --upgrade --unsafe-perm && \
+    apt-get autoremove -y && \
+    apt-get clean
+
+RUN apt-get update && \
+    apt-get install -y libpq-dev \
+    imagemagick libmagick++-dev \
+    postgresql-client-9.6 \
+    libxml2 \
+    libmariadbclient-dev \
+    libsqlite3-dev \
+    pkg-config \
+    libffi-dev \
+    cmake && \
+    apt-get clean
+
+ENTRYPOINT /bin/bash -l
+
